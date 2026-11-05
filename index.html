@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EARTH SIGNAL | Climate Scenario Lab</title>
+<style>
+:root{--bg:#07111d;--panel:#101f30;--panel2:#14283b;--line:#263c50;--txt:#eaf3fb;--muted:#9db0c2;--cyan:#52d6e8;--green:#77e0b5;--amber:#ffca72;--red:#ff7f83}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#17344a 0,#07111d 42%);color:var(--txt);font:15px/1.5 Inter,Segoe UI,Arial,sans-serif}
+header{padding:28px max(20px,calc((100vw - 1180px)/2)) 18px;border-bottom:1px solid var(--line)}
+.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:2.4px;font-weight:800}h1{margin:7px 0 2px;font-size:clamp(28px,5vw,46px);letter-spacing:-1.5px}header p{color:var(--muted);margin:6px 0 0;max-width:760px}
+main{max-width:1180px;margin:auto;padding:22px 18px 50px}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+button,.chip{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}button:hover{border-color:var(--cyan)}.status{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}.panel{background:linear-gradient(145deg,#122438,#0d1b2a);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 12px 35px #0002}.panel h2{font-size:16px;margin:0 0 3px}.sub{color:var(--muted);font-size:12px;margin-bottom:15px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.metric{background:#0b1927;border:1px solid var(--line);border-radius:12px;padding:13px}.metric small{color:var(--muted);display:block;font-size:11px}.metric strong{font-size:24px;display:block;margin:5px 0}.metric em{font-style:normal;color:var(--green);font-size:11px}
+.controls{display:grid;gap:15px}.control{padding:12px;background:#0b1927;border:1px solid var(--line);border-radius:12px}.controltop{display:flex;justify-content:space-between;gap:12px;font-weight:700}.controltop output{color:var(--cyan);font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:var(--cyan);margin:12px 0 2px}.hint{font-size:11px;color:var(--muted)}
+canvas{width:100%;height:260px;display:block}.chartwrap{position:relative}.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--cyan)}
+.toggle{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0b1927;border:1px solid var(--line);border-radius:10px}.switch{appearance:none;width:38px;height:22px;border-radius:20px;background:#43566a;position:relative;cursor:pointer}.switch:checked{background:#168da0}.switch:before{content:"";position:absolute;width:16px;height:16px;top:3px;left:3px;background:white;border-radius:50%;transition:.15s}.switch:checked:before{left:19px}
+.full{grid-column:1/-1}.impactrow{display:grid;grid-template-columns:180px 1fr 65px;gap:10px;align-items:center;margin:13px 0;font-size:13px}.track{height:9px;background:#26384a;border-radius:10px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));border-radius:10px}
+.note{border-left:3px solid var(--amber);padding:10px 13px;background:#241f18;border-radius:7px;color:#e8d5b2;font-size:12px;margin-top:14px}.sources a{color:var(--cyan);text-decoration:none}.sources a:hover{text-decoration:underline}.footer{color:var(--muted);font-size:11px;margin-top:18px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr 1fr}.full{grid-column:auto}}
+@media(max-width:480px){.metrics{grid-template-columns:1fr}.impactrow{grid-template-columns:115px 1fr 45px;font-size:11px}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">EARTH SIGNAL / SCENARIO LAB 01</div><h1>What if Earth changes?</h1><p>Explore how changing climate drivers could influence global indicators over the next 24 months. Move the controls, switch processes on or off, and compare scenarios.</p></header>
+<main>
+<div class="bar"><button id="refresh">↻ Load latest NASA temperature data</button><button id="reset">Reset scenario</button><span class="status" id="dataStatus">Using built-in illustrative baseline until live data loads.</span></div>
+<div class="metrics">
+<div class="metric"><small>PROJECTED GLOBAL TEMP. ANOMALY</small><strong id="tempOut">—</strong><em id="tempDelta">24-month scenario</em></div>
+<div class="metric"><small>CO₂ CONCENTRATION SCENARIO</small><strong id="co2Out">—</strong><em>ppm · illustrative</em></div>
+<div class="metric"><small>SEA-LEVEL CHANGE INDEX</small><strong id="seaOut">—</strong><em>relative scenario index</em></div>
+</div>
+<div class="grid">
+<section class="panel"><h2>Scenario controls</h2><div class="sub">Adjust the drivers below. Values are scenario assumptions, not live measurements.</div>
+<div class="controls">
+<div class="control"><div class="controltop"><label for="co2">Atmospheric CO₂ growth</label><output id="co2Val">2.5 ppm/year</output></div><input id="co2" type="range" min="0" max="5" step=".1" value="2.5"><div class="hint">Annual concentration growth assumption.</div></div>
+<div class="control"><div class="controltop"><label for="emissions">Emissions reduction</label><output id="emissionsVal">0%</output></div><input id="emissions" type="range" min="0" max="100" step="1" value="0"><div class="hint">Assumed global reduction relative to today's emissions pathway.</div></div>
+<div class="control"><div class="controltop"><label for="forest">Forest / land-cover loss</label><output id="forestVal">0.2% / year</output></div><input id="forest" type="range" min="0" max="2" step=".1" value=".2"><div class="hint">Simplified annual land-cover pressure scenario.</div></div>
+<div class="control"><div class="controltop"><label for="aerosol">Aerosol cooling influence</label><output id="aerosolVal">0.0 °C</output></div><input id="aerosol" type="range" min="-0.3" max=".3" step=".01" value="0"><div class="hint">Net temperature offset assumption (negative = cooling).</div></div>
+<div class="control"><div class="controltop"><label for="ocean">Ocean heat uptake</label><output id="oceanVal">50%</output></div><input id="ocean" type="range" min="0" max="100" step="1" value="50"><div class="hint">Higher uptake temporarily reduces surface warming in this toy model.</div></div>
+</div>
+</section>
+<section class="panel"><h2>Processes to include</h2><div class="sub">Turn individual effects on or off to isolate their contribution.</div>
+<div class="controls">
+<div class="toggle"><span>Greenhouse-gas warming</span><input class="switch" id="ghg" type="checkbox" checked></div>
+<div class="toggle"><span>Land-cover feedback</span><input class="switch" id="land" type="checkbox" checked></div>
+<div class="toggle"><span>Ocean heat buffering</span><input class="switch" id="oceanOn" type="checkbox" checked></div>
+<div class="toggle"><span>Aerosol influence</span><input class="switch" id="aerosolOn" type="checkbox" checked></div>
+<div class="toggle"><span>Ice / albedo feedback</span><input class="switch" id="ice" type="checkbox" checked></div>
+<div class="note"><b>Model note:</b> This is an educational sensitivity sandbox. It is not a validated Earth-system model and must not be presented as an official NASA forecast.</div>
+</div></section>
+<section class="panel"><h2>24-month temperature pathway</h2><div class="sub">Baseline trend vs. your selected scenario · °C anomaly</div><div class="chartwrap"><canvas id="chart" width="700" height="280"></canvas></div><div class="legend"><span><i class="dot"></i>Baseline trend</span><span><i class="dot" style="background:var(--amber)"></i>Your scenario</span></div></section>
+<section class="panel"><h2>Estimated relative effects</h2><div class="sub">Direction and strength within this simplified scenario model.</div>
+<div id="impacts"></div><div class="note">Impact scores are normalized scenario indicators, not probabilities or measured physical quantities.</div></section>
+<section class="panel full"><h2>Read the result responsibly</h2><div class="sub">What the dashboard can and cannot tell you.</div>
+<p style="color:var(--muted);font-size:13px">The sliders let you test “what if” assumptions. The model combines a recent observed temperature trend with small, explicitly assumed scenario adjustments. It does not calculate atmospheric chemistry, regional rainfall, extreme-weather probabilities, ice-sheet dynamics, or full ocean circulation. A two-year forecast is especially sensitive to natural variability such as El Niño and La Niña.</p>
+<div class="sources"><b>Data & references</b><ul><li><a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">NASA GISS — GISTEMP v4</a> (global land-ocean temperature anomaly).</li><li><a href="https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv" target="_blank" rel="noopener">NASA monthly global temperature CSV</a>.</li><li><a href="https://climate.nasa.gov/vital-signs/carbon-dioxide/" target="_blank" rel="noopener">NASA Climate — Carbon dioxide</a>.</li><li><a href="https://climate.nasa.gov/vital-signs/sea-level/" target="_blank" rel="noopener">NASA Climate — Sea level</a>.</li></ul></div>
+<div class="footer">NASA GISTEMP anomalies use the 1951–1980 reference period. Latest available month depends on NASA's publication schedule. If the CSV cannot load due to network or browser restrictions, the dashboard remains usable with its clearly labelled illustrative baseline.</div>
+</section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+let observed=1.2, trend=.018, dataLabel="Illustrative baseline";
+const controls=["co2","emissions","forest","aerosol","ocean"];
+function values(){return {co2:+$("co2").value,emissions:+$("emissions").value,forest:+$("forest").value,aerosol:+$("aerosol").value,ocean:+$("ocean").value}}
+function calc(){
+ const v=values(), ghg=$("ghg").checked,land=$("land").checked,oceanOn=$("oceanOn").checked,aero=$("aerosolOn").checked,ice=$("ice").checked;
+ // Transparent, illustrative sensitivity coefficients; not a calibrated climate model.
+ const co2Effect=ghg?(v.co2/2.5)*.045*(1-v.emissions/150):0;
+ const landEffect=land?v.forest*.012:0;
+ const oceanEffect=oceanOn?-(v.ocean/100)*.012:0;
+ const aerosolEffect=aero?v.aerosol:0;
+ const iceEffect=ice?Math.max(0,observed-0.8)*.012:0;
+ const scenario=observed+trend*24+co2Effect+landEffect+oceanEffect+aerosolEffect+iceEffect;
+ const co2ppm=425+v.co2*2-v.emissions*.025;
+ const seaIndex=100+Math.max(0,scenario-observed)*8+(ice?2:0);
+ $("tempOut").textContent=scenario.toFixed(2)+" °C";
+ $("tempDelta").textContent=(scenario-observed>=0?"+":"")+(scenario-observed).toFixed(2)+"°C from baseline";
+ $("co2Out").textContent=co2ppm.toFixed(1);
+ $("seaOut").textContent=seaIndex.toFixed(1);
+ $("co2Val").textContent=v.co2.toFixed(1)+" ppm/year";
+ $("emissionsVal").textContent=v.emissions+"%";
+ $("forestVal").textContent=v.forest.toFixed(1)+"% / year";
+ $("aerosolVal").textContent=v.aerosol.toFixed(2)+" °C";
+ $("oceanVal").textContent=v.ocean+"%";
+ const items=[["Greenhouse gases",co2Effect],["Land-cover pressure",landEffect],["Ocean buffering",oceanEffect],["Aerosol offset",aerosolEffect],["Ice-albedo feedback",iceEffect]];
+ $("impacts").innerHTML=items.map(([n,x])=>{let pct=Math.min(100,Math.abs(x)*500);let sign=x>0?"+":"";return `<div class="impactrow"><span>${n}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><b>${sign}${x.toFixed(3)}°</b></div>`}).join("");
+ draw(scenario);
+}
+function draw(scenario){
+ const c=$("chart"),ctx=c.getContext("2d"),w=c.width,h=c.height,p={l:48,r:16,t:18,b:32};ctx.clearRect(0,0,w,h);
+ const vals=Array.from({length:25},(_,i)=>observed+trend*i),sc=vals.map((x,i)=>x+(scenario-(observed+trend*24))*i/24);
+ const min=Math.min(...vals,...sc)-.08,max=Math.max(...vals,...sc)+.08;
+ const X=i=>p.l+i/24*(w-p.l-p.r),Y=v=>h-p.b-(v-min)/(max-min)*(h-p.t-p.b);
+ ctx.font="11px Arial";ctx.fillStyle="#9db0c2";ctx.strokeStyle="#263c50";ctx.lineWidth=1;
+ for(let k=0;k<5;k++){let y=p.t+k*(h-p.t-p.b)/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText((max-k*(max-min)/4).toFixed(2),4,y+4)}
+ function line(a,color){ctx.beginPath();a.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke()}
+ line(vals,"#52d6e8");line(sc,"#ffca72");
+ ctx.fillStyle="#9db0c2";ctx.fillText("NOW",p.l,h-8);ctx.fillText("+12 months",X(12)-28,h-8);ctx.fillText("+24 months",X(24)-55,h-8);
+}
+async function loadNASA(){
+ $("dataStatus").textContent="Connecting to NASA GISTEMP…";
+ try{
+  const res=await fetch("https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv",{cache:"no-store"});
+  if(!res.ok)throw Error("NASA CSV unavailable");
+  const txt=await res.text(),lines=txt.trim().split(/\r?\n/);let rows=[];
+  for(let i=2;i<lines.length;i++){let a=lines[i].split(",");let year=+a[0];if(year>=2000){for(let m=1;m<=12;m++){let n=+a[m];if(a[m]&&a[m]!=="***"&&Number.isFinite(n)&&n>-90)rows.push({year,month:m,val:n/100})}}}
+  if(rows.length<24)throw Error("Not enough observations");
+  let recent=rows.slice(-36),first=recent[0],last=recent[recent.length-1];
+  observed=last.val;
+  trend=Math.max(-.01,Math.min(.04,(last.val-first.val)/Math.max(1,recent.length-1)));
+  dataLabel=`NASA GISTEMP loaded through ${last.year}-${String(last.month).padStart(2,"0")}`;
+  $("dataStatus").textContent=dataLabel+" · anomaly baseline 1951–1980";
+  calc();
+ }catch(e){$("dataStatus").textContent="NASA data could not be fetched in this browser. Showing illustrative baseline; use the NASA CSV link to verify data.";calc()}
+}
+controls.forEach(id=>$(id).addEventListener("input",calc));
+["ghg","land","oceanOn","aerosolOn","ice"].forEach(id=>$(id).addEventListener("change",calc));
+$("refresh").addEventListener("click",loadNASA);
+$("reset").addEventListener("click",()=>{ $("co2").value=2.5;$("emissions").value=0;$("forest").value=.2;$("aerosol").value=0;$("ocean").value=50;["ghg","land","oceanOn","aerosolOn","ice"].forEach(id=>$(id).checked=true);calc()});
+calc();loadNASA();
+</script>
+</body></html>
